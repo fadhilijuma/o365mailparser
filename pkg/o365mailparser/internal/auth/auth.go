@@ -16,7 +16,8 @@ var (
 )
 
 type Auth struct {
-	Client confidential.Client
+	ctx    context.Context
+	client confidential.Client
 }
 
 // Authenticate returns an authenticated confidential client using the provided tenant credentials.
@@ -29,16 +30,16 @@ func Authenticate(ctx context.Context, c *domain.Credentials) (*Auth, error) {
 	if err != nil {
 		return nil, fmt.Errorf("authenticate tenant credentiats: %w", err)
 	}
-	return &Auth{Client: confidentialClient}, nil
+	return &Auth{ctx: ctx, client: confidentialClient}, nil
 }
 
 // AcquireToken returns to us a brand-new token or the existing token from the cache that is not yet expired.
-func (a *Auth) AcquireToken(ctx context.Context) (string, error) {
+func (a *Auth) AcquireToken() (string, error) {
 	scopes := []string{"email"}
-	result, err := a.Client.AcquireTokenSilent(ctx, scopes)
+	result, err := a.client.AcquireTokenSilent(a.ctx, scopes)
 	if err != nil {
 		// cache miss, authenticate with another AcquireToken... method
-		result, err = a.Client.AcquireTokenByCredential(ctx, scopes)
+		result, err = a.client.AcquireTokenByCredential(a.ctx, scopes)
 		if err != nil {
 			return "", fmt.Errorf("acquire token silently: %w", err)
 		}
