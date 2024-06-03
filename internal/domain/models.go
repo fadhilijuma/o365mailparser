@@ -19,5 +19,5 @@ type Credentials struct {
 	ClientSecret   string
 	TenantDomain   string
 	TenantID       string
-	NumberOfEmails int
+	NumberOfEmails int32
 }

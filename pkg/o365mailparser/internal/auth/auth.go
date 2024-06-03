@@ -3,15 +3,15 @@ package auth
 import (
 	"context"
 	"fmt"
-	azidentity "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	graph "github.com/microsoftgraph/msgraph-sdk-go"
 	"o365mailparser/internal/domain"
 )
 
 // https://learn.microsoft.com/en-us/office/office-365-management-api/get-started-with-office-365-management-apis
 
 type Authenticator interface {
-	NewClient() (*msgraphsdk.GraphServiceClient, error)
+	NewClient() (*graph.GraphServiceClient, error)
 }
 
 // Auth wraps a contextualised confidential client.
@@ -31,8 +31,8 @@ func NewClientSecretCredentials(ctx context.Context, c domain.Credentials) (*Aut
 }
 
 // NewClient returns to us a brand-new token or the existing token from the cache that is not yet expired.
-func (a *Auth) NewClient() (*msgraphsdk.GraphServiceClient, error) {
-	client, err := msgraphsdk.NewGraphServiceClientWithCredentials(a.cred, []string{"Files.Read"})
+func (a *Auth) NewClient() (*graph.GraphServiceClient, error) {
+	client, err := graph.NewGraphServiceClientWithCredentials(a.cred, []string{"Files.Read"})
 	if err != nil {
 		return nil, fmt.Errorf("creating client: %w", err)
 	}
