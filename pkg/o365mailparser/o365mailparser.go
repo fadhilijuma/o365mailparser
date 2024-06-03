@@ -10,11 +10,11 @@ import (
 
 // Read reads the number of emails in a specified email account.
 func Read(ctx context.Context, log *logger.Logger, cred domain.Credentials) error {
-	authenticate, err := auth.Authenticate(ctx, cred)
+	credentials, err := auth.NewClientSecretCredentials(ctx, cred)
 	if err != nil {
 
 	}
-	token, err := authenticate.AcquireToken()
+	token, err := credentials.NewClient()
 	if err != nil {
 
 	}
