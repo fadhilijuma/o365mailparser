@@ -22,7 +22,7 @@ type Auth struct {
 }
 
 // Authenticate returns an authenticated confidential client using the provided tenant credentials.
-func Authenticate(ctx context.Context, c *domain.Credentials) (*Auth, error) {
+func Authenticate(ctx context.Context, c domain.Credentials) (*Auth, error) {
 	cred, err := confidential.NewCredFromSecret(c.ClientSecret)
 	if err != nil {
 		return nil, err
