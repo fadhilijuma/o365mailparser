@@ -15,6 +15,7 @@ var (
 	microsoftTokenURL = "https://login.microsoftonline.com/%s"
 )
 
+// Auth wraps a contextualised confidential client.
 type Auth struct {
 	ctx    context.Context
 	client confidential.Client
