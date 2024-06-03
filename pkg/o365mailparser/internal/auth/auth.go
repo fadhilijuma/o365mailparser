@@ -3,31 +3,46 @@ package auth
 import (
 	"context"
 	"fmt"
-	"golang.org/x/oauth2/clientcredentials"
-	"net/http"
-	"net/url"
+	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
 	"o365mailparser/internal/domain"
-	"time"
 )
 
+// https://learn.microsoft.com/en-us/office/office-365-management-api/get-started-with-office-365-management-apis
+// https://login.windows.net/common/oauth2/authorize?response_type=code&resource=https%3A%2F%2Fmanage.office.com&client_id={your_client_id}&redirect_uri={your_redirect_url }
 var (
-	defaultBaseURL   = "https://manage.office.com"
-	defaultVersion   = "v1.0"
-	defaultUserAgent = "o365mailparser"
-	defaultTimeout   = 5 * time.Second
+	defaultApplicationID = "o365mailparser"
 
-	microsoftTokenURL = "https://login.windows.net/%s/oauth2/token?api-version=1.0"
+	microsoftTokenURL = "https://login.microsoftonline.com/%s"
 )
 
-// OAuthClient returns an authenticated httpClient using the provided credentials.
-func OAuthClient(ctx context.Context, c *domain.Credentials) *http.Client {
-	conf := &clientcredentials.Config{
-		ClientID:     c.ClientID,
-		ClientSecret: c.ClientSecret,
-		TokenURL:     fmt.Sprintf(microsoftTokenURL, c.TenantDomain),
-		EndpointParams: url.Values{
-			"resource": []string{defaultBaseURL},
-		},
+type Auth struct {
+	Client confidential.Client
+}
+
+// Authenticate returns an authenticated confidential client using the provided tenant credentials.
+func Authenticate(ctx context.Context, c *domain.Credentials) (*Auth, error) {
+	cred, err := confidential.NewCredFromSecret(c.ClientSecret)
+	if err != nil {
+		return nil, err
 	}
-	return conf.Client(ctx)
+	confidentialClient, err := confidential.New(fmt.Sprintf(microsoftTokenURL, c.TenantDomain), defaultApplicationID, cred)
+	if err != nil {
+		return nil, fmt.Errorf("authenticate tenant credentiats: %w", err)
+	}
+	return &Auth{Client: confidentialClient}, nil
+}
+
+// AcquireToken returns to us a brand-new token or the existing token from the cache that is not yet expired.
+func (a *Auth) AcquireToken(ctx context.Context) (string, error) {
+	scopes := []string{"email"}
+	result, err := a.Client.AcquireTokenSilent(ctx, scopes)
+	if err != nil {
+		// cache miss, authenticate with another AcquireToken... method
+		result, err = a.Client.AcquireTokenByCredential(ctx, scopes)
+		if err != nil {
+			return "", fmt.Errorf("acquire token silently: %w", err)
+		}
+	}
+	accessToken := result.AccessToken
+	return accessToken, nil
 }
