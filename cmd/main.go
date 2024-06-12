@@ -23,7 +23,7 @@ type config struct {
 		ClientSecret   string `conf:"default:secret,mask"`
 		TenantDomain   string `conf:"default:domain"`
 		TenantID       string `conf:"default:tenant"`
-		NumberOfEmails int    `conf:"default:2"`
+		NumberOfEmails int32  `conf:"default:2"`
 	}
 }
 
@@ -77,9 +77,9 @@ func processCommands(args conf.Args, log *logger.Logger, cfg config) error {
 	}
 
 	switch args.Num(0) {
-	case "read":
-		if err := commands.Read(log, credentials); err != nil {
-			return fmt.Errorf("reading emails: %w", err)
+	case "fetch":
+		if err := commands.FetchAndProcessEmailsCmd(log, credentials); err != nil {
+			return fmt.Errorf("fetching and processing emails: %w", err)
 		}
 
 	default:
